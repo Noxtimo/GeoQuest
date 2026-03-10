@@ -1,20 +1,43 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-export default function App() {
+// Import your screens
+import MapScreen from './src/components/screens/MapScreen';
+import CacheListScreen from './src/components/screens/CacheListScreen';
+
+const Stack = createNativeStackNavigator();
+
+const App = () => {
+  // Initialisations ---------------------
+  
+  // State -------------------------------
+  
+  // Handlers ----------------------------
+  
+  // View --------------------------------
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName="Map"
+        screenOptions={{
+          headerStyle: { backgroundColor: 'black' },
+          headerTintColor: 'white',
+        }}
+      >
+        <Stack.Screen 
+          name="Map" 
+          component={MapScreen} 
+          options={{ title: 'GeoQuest Map' }} 
+        />
+        <Stack.Screen 
+          name="CacheList" 
+          component={CacheListScreen} 
+          options={{ title: 'My Caches' }} 
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
