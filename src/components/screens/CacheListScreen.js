@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Text,
   StyleSheet,
@@ -7,15 +7,28 @@ import {
   Image,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Screen from "../layout/Screen";
+import { getFoundCacheIds } from "../storage/foundCacheStorage";
 
 const CacheListScreen = () => {
-  const navigation = useNavigation(); // <-- Add this
+  const navigation = useNavigation();
   const [caches, setCaches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [foundCacheIds, setFoundCacheIds] = useState([]);
+
+  const loadFoundCaches = useCallback(async () => {
+    const ids = await getFoundCacheIds();
+    setFoundCacheIds(ids);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFoundCaches();
+    }, [loadFoundCaches])
+  );
 
   // Fetch data from Graeme's API when the component mounts
   useEffect(() => {
@@ -37,9 +50,10 @@ const CacheListScreen = () => {
   }, []);
 
   const handlePress = (cache) => {
-    // Pass the selected cache object to the Detail screen
-    navigation.navigate("CacheDetail", { cache: cache }); 
+    navigation.navigate("CacheDetail", { cache: cache });
   };
+
+  const isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
 
   return (
     <Screen>
@@ -61,12 +75,29 @@ const CacheListScreen = () => {
               {cache.CacheImageURL ? (
                 <Image source={{ uri: cache.CacheImageURL }} style={styles.image} />
               ) : (
-                <View style={[styles.image, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
+                <View
+                  style={[
+                    styles.image,
+                    {
+                      backgroundColor: "#ccc",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    },
+                  ]}
+                >
                   <Text>No Image</Text>
                 </View>
               )}
 
               <View style={styles.info}>
+                <View style={styles.codeRow}>
+                  <Text style={styles.code}>
+                    {cache.CacheCode || `Cache #${cache.CacheID}`}
+                  </Text>
+                  {isFound(cache.CacheID) ? (
+                    <Text style={styles.foundBadge}>Found</Text>
+                  ) : null}
+                </View>
                 <Text style={styles.name}>{cache.CacheName}</Text>
                 <Text style={styles.details}>{cache.CacheDescription}</Text>
                 <Text style={styles.details}>Clue: {cache.CacheClue}</Text>
@@ -106,6 +137,26 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
   },
+  codeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  code: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginRight: 8,
+  },
+  foundBadge: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#155724",
+    backgroundColor: "#d4edda",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
   name: {
     fontSize: 16,
     fontWeight: "bold",
@@ -113,7 +164,7 @@ const styles = StyleSheet.create({
   },
   details: {
     fontSize: 13,
-    color: '#555',
+    color: "#555",
   },
 });
 
