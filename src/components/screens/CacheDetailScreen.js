@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable, Image } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import Screen from '../layout/Screen';
+import { saveFoundCacheId } from '../storage/foundCacheStorage';
 
 const CacheDetailScreen = ({ route, navigation }) => {
   // We receive the specific cache data passed from the previous screen
-  const { cache } = route.params; 
-  
+  const { cache } = route.params;
+
   const [distance, setDistance] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [photoUri, setPhotoUri] = useState(null);
@@ -24,7 +25,7 @@ const CacheDetailScreen = ({ route, navigation }) => {
       Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; 
+    return R * c;
   };
 
   useEffect(() => {
@@ -37,14 +38,14 @@ const CacheDetailScreen = ({ route, navigation }) => {
       }
 
       let currentLocation = await Location.getCurrentPositionAsync({});
-      
+
       const dist = calculateDistance(
         currentLocation.coords.latitude,
         currentLocation.coords.longitude,
         cache.CacheLatitude,
         cache.CacheLongitude
       );
-      
+
       setDistance(Math.round(dist));
       setIsLoading(false);
     };
@@ -56,7 +57,7 @@ const CacheDetailScreen = ({ route, navigation }) => {
     // Request Camera Permissions
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Refused", "You need to allow camera access to take photo evidence.");
+      Alert.alert('Permission Refused', 'You need to allow camera access to take photo evidence.');
       return;
     }
 
@@ -74,33 +75,34 @@ const CacheDetailScreen = ({ route, navigation }) => {
 
   const postFindToAPI = async (imageUri) => {
     setIsLogging(true);
-    
+
     // Constructing the Find Object based on Graeme's API Docs
     const findData = {
       FindPlayerID: 1, // Hardcoded for now until user login is built
       FindCacheID: cache.CacheID,
       FindDatetime: new Date().toISOString(), // ISO 8601 format as requested by the API
-      FindImageURL: imageUri // Storing local URI for now
+      FindImageURL: imageUri, // Storing local URI for now
     };
 
     try {
-      const response = await fetch("http://mark0s.com/geoquest/v1/api/finds?key=16gv8f", {
-        method: "POST",
+      const response = await fetch('http://mark0s.com/geoquest/v1/api/finds?key=16gv8f', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(findData),
       });
 
       if (response.ok) {
-        Alert.alert("Success!", `You found ${cache.CacheName} and earned ${cache.CachePoints} points!`);
+        await saveFoundCacheId(cache.CacheID);
+        Alert.alert('Success!', `You found ${cache.CacheName} and earned ${cache.CachePoints} points!`);
         navigation.goBack(); // Send them back to the list/map
       } else {
-        Alert.alert("Error", "Failed to log the find on the server.");
+        Alert.alert('Error', 'Failed to log the find on the server.');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Network Error", "Could not connect to the API.");
+      Alert.alert('Network Error', 'Could not connect to the API.');
     } finally {
       setIsLogging(false);
     }
@@ -123,20 +125,20 @@ const CacheDetailScreen = ({ route, navigation }) => {
             <Text style={styles.distanceText}>
               Distance: {distance} meters away
             </Text>
-            
+
             {isWithinRange ? (
               <Text style={styles.successText}>You are close enough to unlock this cache!</Text>
             ) : (
               <Text style={styles.warningText}>Get within 50 meters to unlock.</Text>
             )}
 
-            <Pressable 
-              style={[styles.button, (!isWithinRange || isLogging) && styles.buttonDisabled]} 
+            <Pressable
+              style={[styles.button, (!isWithinRange || isLogging) && styles.buttonDisabled]}
               onPress={handleUnlockAndLog}
               disabled={!isWithinRange || isLogging}
             >
               <Text style={styles.buttonText}>
-                {isLogging ? "Logging..." : "Take Photo & Unlock Cache"}
+                {isLogging ? 'Logging...' : 'Take Photo & Unlock Cache'}
               </Text>
             </Pressable>
           </View>
