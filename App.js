@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MapScreen from './src/components/screens/MapScreen';
 import CacheListScreen from './src/components/screens/CacheListScreen';
 import CacheDetailScreen from './src/components/screens/CacheDetailScreen';
+import LeaderboardScreen from './src/components/screens/LeaderboardScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +41,11 @@ const App = () => {
           name="CacheDetail"
           component={CacheDetailScreen}
           options={{ title: 'Cache Details' }}
+        <Stack.Screen
+          name="Leaderboard"
+          component={LeaderboardScreen}
+          options={{ title: 'Leaderboard' }}
+        />
         />
       </Stack.Navigator>
     </NavigationContainer>
