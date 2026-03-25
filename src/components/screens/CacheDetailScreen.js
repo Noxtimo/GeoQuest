@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import Screen from '../layout/Screen';
 import { saveFoundCacheId } from '../storage/foundCacheStorage';
+import { getApiUrl } from '../../config';
 
 const CacheDetailScreen = ({ route, navigation }) => {
   // We receive the specific cache data passed from the previous screen
@@ -85,7 +86,7 @@ const CacheDetailScreen = ({ route, navigation }) => {
     };
 
     try {
-      const response = await fetch('http://mark0s.com/geoquest/v1/api/finds?key=16gv8f', {
+      const response = await fetch(getApiUrl('finds'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
