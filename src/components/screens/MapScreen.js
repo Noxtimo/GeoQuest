@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import Screen from '../layout/Screen';
+import { getApiUrl } from '../../config';
 
 const MapScreen = () => {
   const [location, setLocation] = useState(null);
@@ -25,7 +26,7 @@ const MapScreen = () => {
 
     // 2. Fetch the Cache data from the API
     const fetchCaches = async () => {
-      try {
+      try {getApiUrl('caches')
         const response = await fetch("http://mark0s.com/geoquest/v1/api/caches?key=16gv8f");
         const data = await response.json();
         setCaches(data);

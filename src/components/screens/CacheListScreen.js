@@ -12,6 +12,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Screen from "../layout/Screen";
 import { getFoundCacheIds } from "../storage/foundCacheStorage";
+import { getApiUrl } from "../../config";
 
 const CacheListScreen = () => {
   const navigation = useNavigation();
@@ -34,8 +35,8 @@ const CacheListScreen = () => {
   useEffect(() => {
     const fetchCaches = async () => {
       try {
-        // Using the public key provided in the assignment email
-        const response = await fetch("http://mark0s.com/geoquest/v1/api/caches?key=16gv8f");
+        // Using the new config helper
+        const response = await fetch(getApiUrl('caches'));
         const data = await response.json();
         setCaches(data);
       } catch (error) {
@@ -57,9 +58,17 @@ const CacheListScreen = () => {
 
   return (
     <Screen>
-      <Text style={styles.title}>
-        Cache List - View Your Discovered Treasures
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          Cache List - View Your Discovered Treasures
+        </Text>
+        <Pressable
+          style={styles.leaderboardButton}
+          onPress={() => navigation.navigate("Leaderboard")}
+        >
+          <Text style={styles.leaderboardButtonText}>Leaderboard</Text>
+        </Pressable>
+      </View>
 
       {isLoading ? (
         <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20 }} />
@@ -112,11 +121,26 @@ const CacheListScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+    alignItems: "center",
+  },
   title: {
     fontSize: 18,
     textAlign: "center",
-    marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 10,
+    fontWeight: "bold",
+  },
+  leaderboardButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  leaderboardButtonText: {
+    color: "#fff",
     fontWeight: "bold",
   },
   card: {
