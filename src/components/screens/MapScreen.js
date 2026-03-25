@@ -102,7 +102,7 @@ const MapScreen = () => {
             style={styles.navButton}
             onPress={() => navigation.navigate("CacheList")}
           >
-            <Text style={styles.navButtonText}>📋 View Cache List</Text>
+            <Text style={styles.navButtonText}>View Cache List</Text>
           </Pressable>
         </View>
       </View>

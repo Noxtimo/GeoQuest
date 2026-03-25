@@ -67,13 +67,13 @@ const CacheListScreen = () => {
             style={styles.navButton}
             onPress={() => navigation.navigate("Map")}
           >
-            <Text style={styles.navButtonText}>📍 Go to Map</Text>
+            <Text style={styles.navButtonText}>Go to Map</Text>
           </Pressable>
           <Pressable
             style={styles.navButton}
             onPress={() => navigation.navigate("Leaderboard")}
           >
-            <Text style={styles.navButtonText}>🏆 Leaderboard</Text>
+            <Text style={styles.navButtonText}>Leaderboard</Text>
           </Pressable>
         </View>
       </View>
