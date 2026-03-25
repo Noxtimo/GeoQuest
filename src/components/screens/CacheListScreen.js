@@ -62,12 +62,20 @@ const CacheListScreen = () => {
         <Text style={styles.title}>
           Cache List - View Your Discovered Treasures
         </Text>
-        <Pressable
-          style={styles.leaderboardButton}
-          onPress={() => navigation.navigate("Leaderboard")}
-        >
-          <Text style={styles.leaderboardButtonText}>Leaderboard</Text>
-        </Pressable>
+        <View style={styles.navRow}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => navigation.navigate("Map")}
+          >
+            <Text style={styles.navButtonText}>📍 Go to Map</Text>
+          </Pressable>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => navigation.navigate("Leaderboard")}
+          >
+            <Text style={styles.navButtonText}>🏆 Leaderboard</Text>
+          </Pressable>
+        </View>
       </View>
 
       {isLoading ? (
@@ -133,14 +141,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: "bold",
   },
-  leaderboardButton: {
+  navRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "100%",
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  navButton: {
     backgroundColor: "#007AFF",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
   },
-  leaderboardButtonText: {
-    color: "#fff",
+  navButtonText: {
+    color: "white",
     fontWeight: "bold",
   },
   card: {

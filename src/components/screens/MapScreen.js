@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { useNavigation } from '@react-navigation/native';
 import Screen from '../layout/Screen';
 import { getApiUrl } from '../../config';
 
 const MapScreen = () => {
+  const navigation = useNavigation();
   const [location, setLocation] = useState(null);
   const [caches, setCaches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,39 +61,51 @@ const MapScreen = () => {
 
   return (
     <Screen>
-      <MapView
-        style={styles.map}
-        showsUserLocation={true} // Automatically shows the user's live GPS location (blue dot)
-        showsMyLocationButton={true} // Adds a button to snap back to the user
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.05, // Zoom level
-          longitudeDelta: 0.05, // Zoom level
-        }}
-      >
-        {/* Loop through API data and drop a pin for every cache */}
-        {caches.map((cache) => (
-          <Marker
-            key={cache.CacheID}
-            coordinate={{
-              latitude: cache.CacheLatitude,
-              longitude: cache.CacheLongitude,
-            }}
-            title={cache.CacheName}
-            description={`Points: ${cache.CachePoints}`}
+      <View style={{ flex: 1 }}>
+        <MapView
+          style={styles.map}
+          showsUserLocation={true} // Automatically shows the user's live GPS location (blue dot)
+          showsMyLocationButton={true} // Adds a button to snap back to the user
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.05, // Zoom level
+            longitudeDelta: 0.05, // Zoom level
+          }}
+        >
+          {/* Loop through API data and drop a pin for every cache */}
+          {caches.map((cache) => (
+            <Marker
+              key={cache.CacheID}
+              coordinate={{
+                latitude: cache.CacheLatitude,
+                longitude: cache.CacheLongitude,
+              }}
+              title={cache.CacheName}
+              description={`Points: ${cache.CachePoints}`}
+            >
+              {/* Callout appears when the user taps the map pin */}
+              <Callout>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>{cache.CacheName}</Text>
+                  <Text>Points: {cache.CachePoints}</Text>
+                  <Text style={styles.calloutClue}>Clue: {cache.CacheClue}</Text>
+                </View>
+              </Callout>
+            </Marker>
+          ))}
+        </MapView>
+
+        {/* Floating Button to go back to the List */}
+        <View style={styles.floatingNav}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => navigation.navigate("CacheList")}
           >
-            {/* Callout appears when the user taps the map pin */}
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{cache.CacheName}</Text>
-                <Text>Points: {cache.CachePoints}</Text>
-                <Text style={styles.calloutClue}>Clue: {cache.CacheClue}</Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
-      </MapView>
+            <Text style={styles.navButtonText}>📋 View Cache List</Text>
+          </Pressable>
+        </View>
+      </View>
     </Screen>
   );
 };
@@ -113,6 +127,26 @@ const styles = StyleSheet.create({
   },
   calloutContainer: {
     padding: 10,
+  floatingNav: {
+    position: "absolute",
+    bottom: 30,
+    alignSelf: "center",
+  },
+  navButton: {
+    backgroundColor: "#000",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    elevation: 5, // Adds a shadow on Android
+    shadowColor: "#000", // Adds a shadow on iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+  },
+  navButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
     minWidth: 150,
   },
   calloutTitle: {

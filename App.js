@@ -41,11 +41,11 @@ const App = () => {
           name="CacheDetail"
           component={CacheDetailScreen}
           options={{ title: 'Cache Details' }}
+        />
         <Stack.Screen
           name="Leaderboard"
           component={LeaderboardScreen}
           options={{ title: 'Leaderboard' }}
-        />
         />
       </Stack.Navigator>
     </NavigationContainer>
