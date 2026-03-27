@@ -4,6 +4,7 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import Screen from '../layout/Screen';
+import PermissionDeniedScreen from './PermissionDeniedScreen';
 import { getApiUrl } from '../../config';
 
 const MapScreen = () => {
@@ -11,13 +12,14 @@ const MapScreen = () => {
   const [location, setLocation] = useState(null);
   const [caches, setCaches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   useEffect(() => {
     // 1. Fetch the user's current GPS Location
     const getUserLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission to access location was denied');
+        setPermissionDenied(true);
         setIsLoading(false);
         return;
       }
@@ -28,8 +30,8 @@ const MapScreen = () => {
 
     // 2. Fetch the Cache data from the API
     const fetchCaches = async () => {
-      try {getApiUrl('caches')
-        const response = await fetch("http://mark0s.com/geoquest/v1/api/caches?key=16gv8f");
+      try {
+        const response = await fetch(getApiUrl('caches'));
         const data = await response.json();
         setCaches(data);
       } catch (error) {
@@ -47,6 +49,10 @@ const MapScreen = () => {
 
     loadMapData();
   }, []);
+
+  if (permissionDenied) {
+    return <PermissionDeniedScreen permissionType="location" />;
+  }
 
   if (isLoading || !location) {
     return (
