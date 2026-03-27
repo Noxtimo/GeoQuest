@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Screen from "../layout/Screen";
+import TreasureChestPlaceholder from "../layout/TreasureChestPlaceholder";
 import { getFoundCacheIds } from "../storage/foundCacheStorage";
 import { getApiUrl } from "../../config";
 
@@ -64,7 +65,15 @@ const CacheListScreen = () => {
     navigation.navigate("CacheDetail", { cache: cache });
   };
 
-  const 
+  const isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
+
+  return (
+    <Screen>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          Cache List - View Your Discovered Treasures
+        </Text>
+
         <View style={styles.eventCodeContainer}>
           <TextInput
             style={styles.eventCodeInput}
@@ -84,14 +93,6 @@ const CacheListScreen = () => {
           )}
         </View>
 
-        isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
-
-  return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          Cache List - View Your Discovered Treasures
-        </Text>
         <View style={styles.navRow}>
           <Pressable
             style={styles.navButton}
@@ -118,22 +119,11 @@ const CacheListScreen = () => {
               style={styles.card}
               onPress={() => handlePress(cache)}
             >
-              {/* Updated to use the correct API property: CacheImageURL */}
+              {/* Use TreasureChestPlaceholder if image not available */}
               {cache.CacheImageURL ? (
                 <Image source={{ uri: cache.CacheImageURL }} style={styles.image} />
               ) : (
-                <View
-                  style={[
-                    styles.image,
-                    {
-                      backgroundColor: "#ccc",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    },
-                  ]}
-                >
-                  <Text>No Image</Text>
-                </View>
+                <TreasureChestPlaceholder style={styles.image} />
               )}
 
               <View style={styles.info}>
@@ -148,7 +138,27 @@ const CacheListScreen = () => {
                 <Text style={styles.name}>{cache.CacheName}</Text>
                 <Text style={styles.details}>{cache.CacheDescription}</Text>
                 <Text style={styles.details}>Clue: {cache.CacheClue}</Text>
-                <Te5,
+                <Text style={styles.details}>Points: {cache.CachePoints}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+    </Screen>
+  );
+};
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 15,
     fontWeight: "bold",
   },
   eventCodeContainer: {
@@ -178,27 +188,7 @@ const CacheListScreen = () => {
   clearButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
-    </Screen>
-  );
-};
-
-const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 10,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 10,
-    fontWeight: "bold",
+    fontSize: 12,
   },
   navRow: {
     flexDirection: "row",
