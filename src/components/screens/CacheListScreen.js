@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Screen from "../layout/Screen";
@@ -19,6 +20,7 @@ const CacheListScreen = () => {
   const [caches, setCaches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [foundCacheIds, setFoundCacheIds] = useState([]);
+  const [eventCode, setEventCode] = useState("");
 
   const loadFoundCaches = useCallback(async () => {
     const ids = await getFoundCacheIds();
@@ -31,30 +33,58 @@ const CacheListScreen = () => {
     }, [loadFoundCaches])
   );
 
-  // Fetch data from Graeme's API when the component mounts
+  // Fetch data from Graeme's API when the component mounts or when eventCode changes
   useEffect(() => {
     const fetchCaches = async () => {
       try {
-        // Using the new config helper
-        const response = await fetch(getApiUrl('caches'));
+        setIsLoading(true);
+        // If eventCode is provided, fetch from events endpoint, otherwise fetch all caches
+        const endpoint = eventCode.trim() 
+          ? `caches/events/${eventCode.trim()}`
+          : 'caches';
+        const response = await fetch(getApiUrl(endpoint));
+        if (!response.ok) {
+          throw new Error('Failed to fetch caches');
+        }
         const data = await response.json();
         setCaches(data);
       } catch (error) {
         console.error("Error fetching caches:", error);
         Alert.alert("Error", "Could not load caches from the server.");
+        setCaches([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchCaches();
-  }, []);
+  }, [eventCode]);
 
   const handlePress = (cache) => {
     navigation.navigate("CacheDetail", { cache: cache });
   };
 
-  const isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
+  const 
+        <View style={styles.eventCodeContainer}>
+          <TextInput
+            style={styles.eventCodeInput}
+            placeholder="Enter Event Code"
+            placeholderTextColor="#999"
+            value={eventCode}
+            onChangeText={setEventCode}
+            editable={!isLoading}
+          />
+          {eventCode !== "" && (
+            <Pressable
+              style={styles.clearButton}
+              onPress={() => setEventCode("")}
+            >
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </Pressable>
+          )}
+        </View>
+
+        isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
 
   return (
     <Screen>
@@ -118,8 +148,37 @@ const CacheListScreen = () => {
                 <Text style={styles.name}>{cache.CacheName}</Text>
                 <Text style={styles.details}>{cache.CacheDescription}</Text>
                 <Text style={styles.details}>Clue: {cache.CacheClue}</Text>
-                <Text style={styles.details}>Points: {cache.CachePoints}</Text>
-              </View>
+                <Te5,
+    fontWeight: "bold",
+  },
+  eventCodeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    width: "100%",
+  },
+  eventCodeInput: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#000",
+  },
+  clearButton: {
+    backgroundColor: "#ff6b6b",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12
             </Pressable>
           ))}
         </ScrollView>
