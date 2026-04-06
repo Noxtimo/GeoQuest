@@ -133,6 +133,8 @@ const styles = StyleSheet.create({
   },
   calloutContainer: {
     padding: 10,
+    minWidth: 150,
+  }, // <-- ADDED THIS MISSING CLOSING BRACKET
   floatingNav: {
     position: "absolute",
     bottom: 30,
@@ -153,8 +155,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-    minWidth: 150,
-  },
   calloutTitle: {
     fontWeight: 'bold',
     fontSize: 16,
@@ -164,6 +164,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 5,
     color: '#555',
+  },
+  // Add minWidth to calloutContainer
+  calloutContainer: {
+    padding: 10,
+    minWidth: 150,
   },
 });
 

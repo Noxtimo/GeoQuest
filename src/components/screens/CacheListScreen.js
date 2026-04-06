@@ -11,6 +11,7 @@ import {
   TextInput,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../../context/AuthContext";
 import Screen from "../layout/Screen";
 import TreasureChestPlaceholder from "../layout/TreasureChestPlaceholder";
 import { getFoundCacheIds } from "../storage/foundCacheStorage";
@@ -18,6 +19,7 @@ import { getApiUrl } from "../../config";
 
 const CacheListScreen = () => {
   const navigation = useNavigation();
+  const { sign_out } = useAuth();
   const [caches, setCaches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [foundCacheIds, setFoundCacheIds] = useState([]);
@@ -67,6 +69,20 @@ const CacheListScreen = () => {
 
   const isFound = (cacheId) => foundCacheIds.includes(Number(cacheId));
 
+  // --- SMART SORT LOGIC ---
+  // We create a copy of the caches array and sort it dynamically
+  const sortedCaches = [...caches].sort((a, b) => {
+    const aFound = isFound(a.CacheID);
+    const bFound = isFound(b.CacheID);
+
+    // Rule 1: Push "Found" caches to the bottom of the list
+    if (aFound && !bFound) return 1;
+    if (!aFound && bFound) return -1;
+
+    // Rule 2: If both are unfound (or both are found), sort by Points (Highest to Lowest)
+    return b.CachePoints - a.CachePoints;
+  });
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -106,6 +122,13 @@ const CacheListScreen = () => {
           >
             <Text style={styles.navButtonText}>Leaderboard</Text>
           </Pressable>
+          {/* ADD THIS LOGOUT BUTTON */}
+          <Pressable
+            style={[styles.navButton, { backgroundColor: '#ff3b30' }]}
+            onPress={sign_out}
+          >
+            <Text style={styles.navButtonText}>Sign Out</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -113,7 +136,7 @@ const CacheListScreen = () => {
         <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20 }} />
       ) : (
         <ScrollView>
-          {caches.map((cache) => (
+          {sortedCaches.map((cache) => (
             <Pressable
               key={cache.CacheID}
               style={styles.card}

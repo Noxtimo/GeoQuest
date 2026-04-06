@@ -14,7 +14,6 @@ import { useAuth } from '../../context/AuthContext';
 
 const RegistrationScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,18 +21,8 @@ const RegistrationScreen = ({ navigation }) => {
 
   const handleRegister = async () => {
     // Validation
-    if (!username.trim()) {
-      Alert.alert('Error', 'Please enter a username');
-      return;
-    }
-
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter an email');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email');
+    if (!username.trim() || username.trim().length < 8) {
+      Alert.alert('Error', 'Username must be at least 8 characters');
       return;
     }
 
@@ -42,8 +31,8 @@ const RegistrationScreen = ({ navigation }) => {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
@@ -53,7 +42,7 @@ const RegistrationScreen = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    const result = await sign_up(username, email, password);
+    const result = await sign_up(username, password);
     setIsLoading(false);
 
     if (result.success) {
@@ -76,23 +65,12 @@ const RegistrationScreen = ({ navigation }) => {
             placeholderTextColor="#999"
             value={username}
             onChangeText={setUsername}
-            editable={!isLoading}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
             autoCapitalize="none"
             editable={!isLoading}
           />
         </View>
+
+
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Password</Text>

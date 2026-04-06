@@ -13,15 +13,16 @@ import Screen from '../layout/Screen';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { sign_in } = useAuth();
 
   const handleLogin = async () => {
     // Validation
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
+
+    if (!username.trim()) {
+      Alert.alert('Error', 'Please enter your username');
       return;
     }
 
@@ -31,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    const result = await sign_in(email, password);
+    const result = await sign_in(username, password);
     setIsLoading(false);
 
     if (!result.success) {
@@ -46,14 +47,13 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.subtitle}>Sign In</Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Username</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your email"
+            placeholder="Enter your username"
             placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
+            value={username}
+            onChangeText={setUsername}
             autoCapitalize="none"
             editable={!isLoading}
           />

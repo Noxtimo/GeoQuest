@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '../config';
 
 const AuthContext = createContext();
 
@@ -8,44 +9,17 @@ export const AuthProvider = ({ children }) => {
     (prevState, action) => {
       switch (action.type) {
         case 'RESTORE_TOKEN':
-          return {
-            ...prevState,
-            userToken: action.payload,
-            isLoading: false,
-          };
+          return { ...prevState, userToken: action.payload, isLoading: false };
         case 'SIGN_IN':
-          return {
-            ...prevState,
-            isSignout: false,
-            userToken: action.payload,
-          };
-        case 'SIGN_OUT':
-          return {
-            ...prevState,
-            isSignout: true,
-            userToken: null,
-            user: null,
-          };
         case 'SIGN_UP':
-          return {
-            ...prevState,
-            isSignout: false,
-            userToken: action.payload.token,
-            user: action.payload.user,
-          };
+          return { ...prevState, isSignout: false, userToken: action.payload.token, user: action.payload.user };
+        case 'SIGN_OUT':
+          return { ...prevState, isSignout: true, userToken: null, user: null };
         case 'SET_USER':
-          return {
-            ...prevState,
-            user: action.payload,
-          };
+          return { ...prevState, user: action.payload };
       }
     },
-    {
-      isLoading: true,
-      isSignout: false,
-      userToken: null,
-      user: null,
-    }
+    { isLoading: true, isSignout: false, userToken: null, user: null }
   );
 
   useEffect(() => {
@@ -53,11 +27,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const userJson = await AsyncStorage.getItem('user');
-        if (token) {
+        if (token && userJson) {
           dispatch({ type: 'RESTORE_TOKEN', payload: token });
-          if (userJson) {
-            dispatch({ type: 'SET_USER', payload: JSON.parse(userJson) });
-          }
+          dispatch({ type: 'SET_USER', payload: JSON.parse(userJson) });
         } else {
           dispatch({ type: 'RESTORE_TOKEN', payload: null });
         }
@@ -65,55 +37,96 @@ export const AuthProvider = ({ children }) => {
         dispatch({ type: 'RESTORE_TOKEN', payload: null });
       }
     };
-
     bootstrapAsync();
   }, []);
 
   const authContext = {
-    sign_in: useCallback(async (email, password) => {
+    // FIXED SIGN IN: GET users and match credentials
+    sign_in: useCallback(async (username, password) => {
       try {
-        const response = await fetch('http://mark0s.com/geoquest/v1/api/auth/login?key=b4cko8', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
+        const response = await fetch(getApiUrl('users'));
+        const users = await response.json();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
+        // Find a user that matches the username and password
+        const foundUser = users.find(
+          (u) => u.UserUsername === username && u.UserPassword === password
+        );
+
+        if (!foundUser) {
+          throw new Error('Invalid username or password');
         }
 
-        const data = await response.json();
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        dispatch({ type: 'SIGN_IN', payload: data.token });
+        // We use the UserID as the token for simplicity in this app
+        const token = foundUser.UserID.toString();
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+        
+        dispatch({ type: 'SIGN_IN', payload: { token, user: foundUser } });
         return { success: true };
       } catch (error) {
         return { success: false, error: error.message };
       }
     }, []),
 
-    sign_up: useCallback(async (username, email, password) => {
+    // FIXED SIGN UP: POST to /api/users
+    // FIXED SIGN UP: POST to /api/users with full payload
+    sign_up: useCallback(async (username, password) => {
       try {
-        const response = await fetch('http://mark0s.com/geoquest/v1/api/auth/register?key=b4cko8', {
+        // We must provide all fields defined in the GeoQuest API documentation
+        const newUser = {
+          UserFirstname: "New",
+          UserLastname: "Explorer",
+          UserPhone: "000000000000",
+          UserUsername: username,
+          UserPassword: password,
+          UserLatitude: 0,
+          UserLongitude: 0,
+          UserTimestamp: Date.now(),
+          UserImageURL: "https://via.placeholder.com/150"
+        };
+
+        const response = await fetch(getApiUrl('users'), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+          headers: { 
+            'Accept': 'application/json',
+            'Content-Type': 'application/json' 
           },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify(newUser),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Registration failed');
+          const serverErrorText = await response.text();
+          console.error("Graeme's Server Error:", serverErrorText);
+          throw new Error(`Server rejected registration. Check your terminal for details.`);
         }
 
-        const data = await response.json();
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        dispatch({ type: 'SIGN_UP', payload: { token: data.token, user: data.user } });
+        const createdUser = await response.json();
+        // THIS IS FOR YOU: Let's see what the server is actually returning!
+        console.log("Success! Server returned:", createdUser);
+
+        // Let's safely try to find the ID, no matter how the server formatted it
+        let newUserId = createdUser.UserID || createdUser.id || createdUser.insertId;
+
+        // If it's an array (e.g., [{"UserID": 123}])
+        if (!newUserId && Array.isArray(createdUser)) {
+          newUserId = createdUser[0]?.UserID;
+        }
+
+        // If the server DID NOT return the user data/ID at all (just a success message)
+        if (!newUserId) {
+           // We return a special flag so the UI knows to send them to the Login screen
+           return { 
+             success: false, 
+             error: "Registration successful! Please tap 'Sign In' to log into your new account." 
+           };
+        }
+
+        const token = newUserId.toString();
+        await AsyncStorage.setItem('userToken', token);
+        // Save the correct user object format depending on if it's an array
+        const userToSave = Array.isArray(createdUser) ? createdUser[0] : createdUser;
+        await AsyncStorage.setItem('user', JSON.stringify(userToSave));
+        dispatch({ type: 'SIGN_UP', payload: { token, user: userToSave } });
         return { success: true };
       } catch (error) {
         return { success: false, error: error.message };
@@ -140,8 +153,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = React.useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

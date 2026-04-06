@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,6 +10,7 @@ import { getApiUrl } from '../../config';
 const CacheDetailScreen = ({ route, navigation }) => {
   // We receive the specific cache data passed from the previous screen
   const { cache } = route.params;
+  const { state } = useAuth(); // <-- Add this to get the logged-in user!
 
   const [distance, setDistance] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +81,7 @@ const CacheDetailScreen = ({ route, navigation }) => {
 
     // Constructing the Find Object based on Graeme's API Docs
     const findData = {
-      FindPlayerID: 1, // Hardcoded for now until user login is built
+      FindPlayerID: state.user.UserID, // <-- NO MORE HARDCODING!
       FindCacheID: cache.CacheID,
       FindDatetime: new Date().toISOString(), // ISO 8601 format as requested by the API
       FindImageURL: imageUri, // Storing local URI for now
