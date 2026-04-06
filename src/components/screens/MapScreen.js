@@ -15,17 +15,34 @@ const MapScreen = () => {
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   useEffect(() => {
-    // 1. Fetch the user's current GPS Location
+    // 1. Fetch the user's current GPS Location (Restored Robust Version)
     const getUserLocation = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setPermissionDenied(true);
-        setIsLoading(false);
-        return;
-      }
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setPermissionDenied(true);
+          setIsLoading(false);
+          return;
+        }
 
-      let currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation.coords);
+        // Fallback to getLastKnownPosition first for speed
+        let currentLocation = await Location.getLastKnownPositionAsync({});
+        
+        // If no last known position, request current with a strict timeout
+        if (!currentLocation) {
+          currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeout: 5000, // Give up after 5 seconds instead of hanging forever
+          });
+        }
+
+        setLocation(currentLocation.coords);
+      } catch (error) {
+        console.warn("Could not fetch location:", error);
+        // Fall back to a default location (London/Kingston) 
+        // so the app still loads if the emulator is acting up.
+        setLocation({ latitude: 51.4066, longitude: -0.3045 }); 
+      }
     };
 
     // 2. Fetch the Cache data from the API
@@ -70,16 +87,15 @@ const MapScreen = () => {
       <View style={{ flex: 1 }}>
         <MapView
           style={styles.map}
-          showsUserLocation={true} // Automatically shows the user's live GPS location (blue dot)
-          showsMyLocationButton={true} // Adds a button to snap back to the user
+          showsUserLocation={true} 
+          showsMyLocationButton={true} 
           initialRegion={{
             latitude: location.latitude,
             longitude: location.longitude,
-            latitudeDelta: 0.05, // Zoom level
-            longitudeDelta: 0.05, // Zoom level
+            latitudeDelta: 0.05, 
+            longitudeDelta: 0.05, 
           }}
         >
-          {/* Loop through API data and drop a pin for every cache */}
           {caches.map((cache) => (
             <Marker
               key={cache.CacheID}
@@ -90,7 +106,6 @@ const MapScreen = () => {
               title={cache.CacheName}
               description={`Points: ${cache.CachePoints}`}
             >
-              {/* Callout appears when the user taps the map pin */}
               <Callout>
                 <View style={styles.calloutContainer}>
                   <Text style={styles.calloutTitle}>{cache.CacheName}</Text>
@@ -102,7 +117,6 @@ const MapScreen = () => {
           ))}
         </MapView>
 
-        {/* Floating Button to go back to the List */}
         <View style={styles.floatingNav}>
           <Pressable
             style={styles.navButton}
@@ -131,10 +145,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  calloutContainer: {
-    padding: 10,
-    minWidth: 150,
-  }, // <-- ADDED THIS MISSING CLOSING BRACKET
   floatingNav: {
     position: "absolute",
     bottom: 30,
@@ -145,8 +155,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 25,
-    elevation: 5, // Adds a shadow on Android
-    shadowColor: "#000", // Adds a shadow on iOS
+    elevation: 5, 
+    shadowColor: "#000", 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
   },
@@ -154,6 +164,10 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  calloutContainer: {
+    padding: 10,
+    minWidth: 150,
   },
   calloutTitle: {
     fontWeight: 'bold',
@@ -164,11 +178,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 5,
     color: '#555',
-  },
-  // Add minWidth to calloutContainer
-  calloutContainer: {
-    padding: 10,
-    minWidth: 150,
   },
 });
 
