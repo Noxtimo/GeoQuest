@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Pressable, Image } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import Screen from '../layout/Screen';
@@ -8,9 +8,8 @@ import { saveFoundCacheId } from '../storage/foundCacheStorage';
 import { getApiUrl } from '../../config';
 
 const CacheDetailScreen = ({ route, navigation }) => {
-  // We receive the specific cache data passed from the previous screen
   const { cache } = route.params;
-  const { state } = useAuth(); // <-- Add this to get the logged-in user!
+  const { state } = useAuth();
 
   const [distance, setDistance] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,20 +70,21 @@ const CacheDetailScreen = ({ route, navigation }) => {
     });
 
     if (!result.canceled) {
+      // Save the URI locally so the app knows we took it, but don't send it to the server
       setPhotoUri(result.assets[0].uri);
-      postFindToAPI(result.assets[0].uri);
+      postFindToAPI();
     }
   };
 
-  const postFindToAPI = async (imageUri) => {
+  const postFindToAPI = async () => {
     setIsLogging(true);
 
     // Constructing the Find Object based on Graeme's API Docs
     const findData = {
-      FindPlayerID: state.user.UserID, // <-- NO MORE HARDCODING!
+      FindPlayerID: state.user.UserID,
       FindCacheID: cache.CacheID,
-      FindDatetime: new Date().toISOString(), // ISO 8601 format as requested by the API
-      FindImageURL: imageUri, // Storing local URI for now
+      FindDatetime: new Date().toISOString(), // ISO 8601 format
+      FindImageURL: "", // <-- THE FIX: Send an empty string to satisfy the API without breaking the server
     };
 
     try {
@@ -99,7 +99,7 @@ const CacheDetailScreen = ({ route, navigation }) => {
       if (response.ok) {
         await saveFoundCacheId(cache.CacheID);
         Alert.alert('Success!', `You found ${cache.CacheName} and earned ${cache.CachePoints} points!`);
-        navigation.goBack(); // Send them back to the list/map
+        navigation.goBack(); 
       } else {
         Alert.alert('Error', 'Failed to log the find on the server.');
       }
@@ -111,7 +111,6 @@ const CacheDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  // We require the user to be within 50 meters to unlock it
   const isWithinRange = distance !== null && distance <= 50;
 
   return (

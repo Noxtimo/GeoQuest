@@ -27,10 +27,41 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const userJson = await AsyncStorage.getItem('user');
+        
         if (token && userJson) {
+          // Normal Flow: A user is already logged in
           dispatch({ type: 'RESTORE_TOKEN', payload: token });
           dispatch({ type: 'SET_USER', payload: JSON.parse(userJson) });
         } else {
+          // --- NEW: SILENT GRADER LOGIN ON BOOT ---
+          try {
+            // Fetch users from API to find the GraderDemo account
+            const response = await fetch(getApiUrl('users'));
+            const users = await response.json();
+            
+            const graderUser = users.find(
+              (u) => u.UserUsername === 'GraderDemo' && u.UserPassword === 'GraderPassword'
+            );
+
+            if (graderUser) {
+              const graderToken = graderUser.UserID.toString();
+              
+              // Save it to AsyncStorage so the app acts like a normal session
+              await AsyncStorage.setItem('userToken', graderToken);
+              await AsyncStorage.setItem('user', JSON.stringify(graderUser));
+              
+              // Silently log them in!
+              dispatch({ type: 'RESTORE_TOKEN', payload: graderToken });
+              dispatch({ type: 'SET_USER', payload: graderUser });
+              return; // Stop execution here so we don't dispatch null below
+            }
+          } catch (err) {
+            console.log("Silent Grader login skipped or failed:", err.message);
+          }
+          
+          // --- FALLBACK ---
+          // If the network fails, or the GraderDemo account isn't in the DB, 
+          // default back to showing the normal Login Screen safely.
           dispatch({ type: 'RESTORE_TOKEN', payload: null });
         }
       } catch (e) {
